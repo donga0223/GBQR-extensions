@@ -47,9 +47,9 @@ The examples below assume that the Flu-MetroCast GBQR forecasts have been loaded
 
 For each combination of reference date, location, and forecast horizon, GBQR provides quantile forecasts at
 
-\[
+$$
 p \in \{0.025, 0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95, 0.975\}.
-\]
+$$
 
 For the current short-term implementation, forecasts are produced for horizons 0, 1, 2, and 3.
 
@@ -76,9 +76,9 @@ Each `(reference_date, location, horizon)` combination then contains the margina
 
 For a continuous predictive distribution \(F_h\) at horizon \(h\), the PIT corresponding to the realized observation \(y_h\) is
 
-\[
+$$
 u_h = F_h(y_h).
-\]
+$$
 
 Because GBQR provides a finite set of quantiles rather than a complete CDF, \(F_h\) must be reconstructed from the quantile forecasts.
 
@@ -86,9 +86,9 @@ Because GBQR provides a finite set of quantiles rather than a complete CDF, \(F_
 
 Let \(p_k\) denote the forecast probabilities and \(q_k\) their corresponding forecast values. The probabilities are first transformed to standard-normal quantiles,
 
-\[
+$$
 z_k = \Phi^{-1}(p_k),
-\]
+$$
 
 where \(\Phi\) is the standard-normal CDF.
 
@@ -96,9 +96,9 @@ For an observation lying within the available GBQR quantile range, its latent sc
 
 This means that interpolation is performed between
 
-\[
+$$
 (q_k,\, \Phi^{-1}(p_k)),
-\]
+$$
 
 rather than directly between forecast values and probabilities.
 
@@ -108,15 +108,15 @@ An observed value can fall below the 0.025 quantile or above the 0.975 quantile.
 
 For the lower tail, a line
 
-\[
+$$
 q = a_L + b_L z
-\]
+$$
 
 is fitted using the 0.025, 0.05, and 0.10 quantiles. For \(y < q_{0.025}\),
 
-\[
+$$
 z = \frac{y-a_L}{b_L}.
-\]
+$$
 
 Similarly, the upper tail is fitted using the 0.90, 0.95, and 0.975 quantiles.
 
@@ -124,23 +124,23 @@ Similarly, the upper tail is fitted using the 0.90, 0.95, and 0.975 quantiles.
 
 Very large extrapolated latent scores can create PIT values numerically indistinguishable from 0 or 1. For estimation, latent scores are therefore bounded using
 
-\[
+$$
 \epsilon = 10^{-7},
 \qquad
 z_{\max} = \Phi^{-1}(1-\epsilon),
-\]
+$$
 
 and
 
-\[
+$$
 z \leftarrow \min\{\max(z,-z_{\max}),z_{\max}\}.
-\]
+$$
 
 The PIT is then
 
-\[
+$$
 u = \Phi(z).
-\]
+$$
 
 This bounding is used for the historical PIT transformation used to estimate the copula. It is **not** applied to newly simulated latent-normal values during trajectory generation.
 
@@ -190,18 +190,18 @@ For the current four-horizon analysis, only forecast origins with PIT values ava
 
 Let
 
-\[
+$$
 \mathbf{Z}_i =
 (Z_{i,0}, Z_{i,1}, Z_{i,2}, Z_{i,3})^\top
-\]
+$$
 
 denote the latent-normal scores for forecast origin \(i\).
 
 We model
 
-\[
+$$
 \mathbf{Z}_i \sim N(\mathbf{0}, \Sigma),
-\]
+$$
 
 where \(\Sigma\) is a correlation matrix describing dependence among forecast horizons.
 
@@ -209,7 +209,7 @@ where \(\Sigma\) is a correlation matrix describing dependence among forecast ho
 
 A Toeplitz structure is used so that correlation depends on the separation between horizons rather than their absolute positions. For four horizons,
 
-\[
+$$
 \Sigma =
 \begin{pmatrix}
 1 & \rho_1 & \rho_2 & \rho_3 \\
@@ -217,7 +217,7 @@ A Toeplitz structure is used so that correlation depends on the separation betwe
 \rho_2 & \rho_1 & 1 & \rho_1 \\
 \rho_3 & \rho_2 & \rho_1 & 1
 \end{pmatrix}.
-\]
+$$
 
 Thus:
 
@@ -233,7 +233,7 @@ The implementation in `copula.py` constructs this matrix generically so that the
 
 For a Gaussian copula, the log copula density for latent-normal vector \(\mathbf z_i\) can be written as
 
-\[
+$$
 \log c(\mathbf u_i;\Sigma)
 =
 -\frac{1}{2}\log|\Sigma|
@@ -241,24 +241,24 @@ For a Gaussian copula, the log copula density for latent-normal vector \(\mathbf
 \mathbf z_i^\top
 (\Sigma^{-1}-I)
 \mathbf z_i,
-\]
+$$
 
 where
 
-\[
+$$
 \mathbf z_i =
 \left[
 \Phi^{-1}(u_{i1}),\ldots,\Phi^{-1}(u_{iH})
 \right]^\top.
-\]
+$$
 
 The parameters of the Toeplitz correlation matrix are estimated by maximizing the sum of this log copula density over complete forecast origins.
 
 Optimization uses **L-BFGS-B**, with each correlation parameter constrained to
 
-\[
+$$
 -0.99 \leq \rho_j \leq 0.99.
-\]
+$$
 
 Candidate matrices that are not positive definite are assigned a large objective value and are therefore excluded by the optimization.
 
@@ -272,15 +272,15 @@ print("Eigenvalues:", np.linalg.eigvalsh(Sigma_hat))
 
 For the current development dataset, the estimated lag correlations were approximately
 
-\[
+$$
 (\hat\rho_1,\hat\rho_2,\hat\rho_3)
 =
 (0.585,\;0.337,\;0.113).
-\]
+$$
 
 The resulting estimated correlation matrix was
 
-\[
+$$
 \hat\Sigma =
 \begin{pmatrix}
 1.000 & 0.585 & 0.337 & 0.113 \\
@@ -288,7 +288,7 @@ The resulting estimated correlation matrix was
 0.337 & 0.585 & 1.000 & 0.585 \\
 0.113 & 0.337 & 0.585 & 1.000
 \end{pmatrix}.
-\]
+$$
 
 These estimates show decreasing dependence as the separation between forecast horizons increases.
 
@@ -298,13 +298,13 @@ Once \(\hat\Sigma\) has been estimated, trajectory generation is separated from 
 
 For a new GBQR forecast origin, latent trajectories are sampled as
 
-\[
+$$
 \mathbf Z^{(s)}
 \sim
 N(\mathbf 0,\hat\Sigma),
 \qquad
 s=1,\ldots,S.
-\]
+$$
 
 For the current implementation, \(S=100\) trajectories are generated for each location and reference date.
 
@@ -322,19 +322,19 @@ Each simulated latent value \(z_h^{(s)}\) must be mapped back to the GBQR predic
 
 For values inside the available quantile range, the transformation is obtained by piecewise-linear interpolation between
 
-\[
+$$
 \left(\Phi^{-1}(p_k), q_k\right).
-\]
+$$
 
 For simulated values outside the available range, the same lower- and upper-tail linear extrapolation rules used for PIT calculation are applied.
 
 Conceptually, this implements
 
-\[
+$$
 Y_h^{(s)}
 =
 F_h^{-1}\left\{\Phi\left(Z_h^{(s)}\right)\right\},
-\]
+$$
 
 where \(F_h^{-1}\) is approximated from the GBQR quantile forecasts.
 
@@ -380,9 +380,9 @@ The output contains one row for each trajectory-horizon combination:
 
 With 77 locations, 100 trajectories per location, and four horizons, a complete reference date contains
 
-\[
+$$
 77 \times 100 \times 4 = 30{,}800
-\]
+$$
 
 rows.
 
@@ -476,7 +476,7 @@ It is useful to distinguish two stages of the workflow.
 
 Historical GBQR forecasts and corresponding observations are used to:
 
-\[
+$$
 \text{GBQR forecasts + observations}
 \rightarrow
 \text{PIT values}
@@ -484,7 +484,7 @@ Historical GBQR forecasts and corresponding observations are used to:
 \text{latent } Z
 \rightarrow
 \hat\Sigma.
-\]
+$$
 
 This stage requires realized observations.
 
@@ -492,13 +492,13 @@ This stage requires realized observations.
 
 Once an appropriate \(\hat\Sigma\) is available, new trajectories can be generated using only the current GBQR marginal forecasts:
 
-\[
+$$
 \text{new GBQR quantiles}
 +
 \hat\Sigma
 \rightarrow
 \text{forecast trajectories}.
-\]
+$$
 
 This distinction is important for prospective forecasting because observations that occur after a forecast reference date cannot be used to estimate the dependence structure for that forecast.
 
