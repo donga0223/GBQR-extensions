@@ -1,15 +1,6 @@
----
-title: "Generating Forecast Trajectories from GBQR Quantile Forecasts"
-subtitle: "Gaussian copula extension for epiENGAGE-GBQR"
-format:
-  html:
-    toc: true
-    toc-depth: 3
-    code-fold: true
-    code-tools: true
-    number-sections: true
-jupyter: python3
----
+# Generating Forecast Trajectories from GBQR Quantile Forecasts
+
+**Gaussian copula extension for epiENGAGE-GBQR**
 
 ## Overview
 
@@ -27,15 +18,13 @@ The workflow is:
 6. Transform each draw back through the corresponding GBQR marginal distribution.
 7. Save the resulting trajectories by reference date and location.
 
-The implementation is based on the general copula-estimation approach used in the accompanying `copula-estimation-step.R`, adapted here to quantile-based GBQR forecasts rather than full KCDE predictive distributions. In the reference implementation, PIT trajectories are assembled across prediction horizons and a Gaussian copula with a Toeplitz dependence structure is estimated by maximum likelihood using L-BFGS-B. fileciteturn69file0
+The implementation is based on the general copula-estimation approach used in the accompanying `copula-estimation-step.R`, adapted here to quantile-based GBQR forecasts rather than full KCDE predictive distributions. In the reference implementation, PIT trajectories are assembled across prediction horizons and a Gaussian copula with a Toeplitz dependence structure is estimated by maximum likelihood using L-BFGS-B.
 
 ## Setup
 
 The reusable copula functions are stored in `copula.py`.
 
-```{python}
-#| eval: false
-
+```python
 import os
 import sys
 import numpy as np
@@ -70,9 +59,7 @@ The copula procedure does **not** replace or refit these marginal forecasts. Ins
 
 Historical forecasts are first matched to the corresponding observed influenza activity using location, target, and target end date.
 
-```{python}
-#| eval: false
-
+```python
 gbqr["target_end_date"] = pd.to_datetime(gbqr["target_end_date"])
 observed["target_end_date"] = pd.to_datetime(observed["target_end_date"])
 
@@ -157,11 +144,9 @@ u = \Phi(z).
 
 This bounding is used for the historical PIT transformation used to estimate the copula. It is **not** applied to newly simulated latent-normal values during trajectory generation.
 
-The reference copula implementation similarly requires PIT values strictly inside the unit interval before fitting the copula. fileciteturn69file0
+The reference copula implementation similarly requires PIT values strictly inside the unit interval before fitting the copula.
 
-```{python}
-#| eval: false
-
+```python
 pit_df = (
     gbqr_obs
     .groupby(
@@ -179,9 +164,7 @@ No additional horizon-specific centering or standardization is applied to the re
 
 The PIT-derived latent scores are reshaped so that each row corresponds to one `(reference_date, location)` forecast origin and each column corresponds to a forecast horizon.
 
-```{python}
-#| eval: false
-
+```python
 z_wide = (
     pit_df
     .pivot(
@@ -242,7 +225,7 @@ Thus:
 - \(\rho_2\) describes dependence between horizons separated by two weeks, and
 - \(\rho_3\) describes dependence between horizons separated by three weeks.
 
-This follows the Toeplitz Gaussian-copula structure used in the reference implementation. fileciteturn69file0
+This follows the Toeplitz Gaussian-copula structure used in the reference implementation.
 
 The implementation in `copula.py` constructs this matrix generically so that the same function can be used for a different number of horizons.
 
@@ -279,9 +262,7 @@ Optimization uses **L-BFGS-B**, with each correlation parameter constrained to
 
 Candidate matrices that are not positive definite are assigned a large objective value and are therefore excluded by the optimization.
 
-```{python}
-#| eval: false
-
+```python
 Sigma_hat, xi_hat, fit = fit_copula(Z)
 
 print("Estimated lag correlations:", xi_hat)
@@ -327,9 +308,7 @@ s=1,\ldots,S.
 
 For the current implementation, \(S=100\) trajectories are generated for each location and reference date.
 
-```{python}
-#| eval: false
-
+```python
 Z_sim = rng.multivariate_normal(
     mean=np.zeros(len(horizons)),
     cov=Sigma_hat,
@@ -363,9 +342,7 @@ Unlike the historical PIT calculation, simulated \(Z\) values are **not clipped*
 
 Because the influenza target is nonnegative, simulated forecast values below zero after tail extrapolation are truncated at zero.
 
-```{python}
-#| eval: false
-
+```python
 Y_sim = generate_copula_trajectories(
     forecast=example_fcst,
     Sigma=Sigma_hat,
@@ -380,9 +357,7 @@ Trajectory generation is performed separately for each location while using the 
 
 For a given reference date:
 
-```{python}
-#| eval: false
-
+```python
 trajectories = generate_trajectories_for_date(
     forecasts=gbqr,
     reference_date=example_date,
@@ -415,9 +390,7 @@ rows.
 
 The same procedure can be repeated across all GBQR reference dates.
 
-```{python}
-#| eval: false
-
+```python
 output_dir = os.path.join(
     project_path,
     "model_output",
@@ -463,9 +436,7 @@ The trajectory-generation procedure should be checked both on the latent scale a
 
 The eigenvalues of the estimated correlation matrix should all be positive.
 
-```{python}
-#| eval: false
-
+```python
 np.linalg.eigvalsh(Sigma_hat)
 ```
 
@@ -486,9 +457,7 @@ For each location, trajectories can be plotted together with:
 
 This provides a direct visual check that the generated trajectories are consistent with the original marginal forecast while showing correlated movement across horizons.
 
-```{python}
-#| eval: false
-
+```python
 plot_all_copula_trajectories(
     forecasts=gbqr,
     observed=observed,
