@@ -1,0 +1,15 @@
+project:
+  type: website
+  output-dir: docs
+
+website:
+  title: "GBQR Extensions"
+  navbar:
+    left:
+      - text: "Quantile-to-Trajectory"
+        href: quantile-to-trajectory/copula_method.qmd
+
+format:
+  html:
+    toc: true
+    code-fold: true
